@@ -13,7 +13,7 @@ class Server {
   private static byte[] sendData = new byte[BUFFER];
   private static byte[] receiveData = new byte[BUFFER];
   private static InetAddress IPAddress;
-  private static int port;
+  private static int port, sequenceNo;
   private static DatagramPacket receivePacket;
   private static DatagramSocket serverSocket;
   private static String sentence;
@@ -38,26 +38,39 @@ class Server {
     }
   }
 
-  private static void sendPacket() throws IOException {
+  private void sendPacket() throws IOException {
     // Sending the bytes back to the client
-    sendData = sentence.getBytes();
-    System.out.println("Sending packet back to the client: " + sentence);
+    getSequenceNo();
+    updateSequenceNo();
+    String ack = "ack. Sequence no:" + sequenceNo;
+    sendData = ack.getBytes();
+    System.out.println("Sending packet back to the client: " + ack);
     DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
     serverSocket.send(sendPacket);
   }
 
-  private static void receivePacket() throws IOException {
+  private void receivePacket() throws IOException {
     receivePacket = new DatagramPacket(receiveData, receiveData.length);
     serverSocket.receive(receivePacket);
     sentence = new String(receivePacket.getData());
     System.out.println("Receiving packet with data: " + sentence);
   }
 
-  private static void setIPAndPort() {
+  private void setIPAndPort() {
     // Setting the IP and port
     IPAddress = receivePacket.getAddress();
     port = receivePacket.getPort();
     System.out.println("Set port: " + port + " and IP address: " + IPAddress);
+  }
+
+  private void getSequenceNo() {
+    String snFromSentence = sentence.split("Sequence no:")[1].trim();
+    sequenceNo = Integer.parseInt(snFromSentence);
+  }
+
+  private void updateSequenceNo() {
+    sequenceNo = (sequenceNo==0) ? 1 : 0;
+    System.out.println("Set sequence no: " + sequenceNo);
   }
 
   public static void main(String args[]) throws Exception {
