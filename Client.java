@@ -9,9 +9,9 @@ import java.nio.file.*;
 import java.nio.ByteBuffer;
 
 class Client {
-	private static final int SN = 1;
+	private static final int SN = 0;
   private static final int BUFFER = 1024;
-  private static final int SLIDING_WINDOW_SIZE = 5;
+  private static final int SLIDING_WINDOW_SIZE = 1;
   private static final int UNACKNOWLEDGED_MESSAGES_SIZE = 0;
   private static final String FILEPATH = "umbrella.txt";
   private static InetAddress IPAddress;
@@ -53,6 +53,7 @@ class Client {
         }
       }
     }
+    System.out.println("All the data has been sent. The program is exiting. Bye bye...");
     clientSocket.close();
   }
 
@@ -103,7 +104,8 @@ class Client {
   }
 
   public static void main(String args[]) throws Exception {
-    Client client = new Client();   //object of sender
+    // Instanstiating the sender
+    Client client = new Client();
     client.stopAndWait(); 
   }
 }

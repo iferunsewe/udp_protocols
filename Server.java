@@ -61,7 +61,9 @@ class Server {
   }
 
   public static void main(String args[]) throws Exception {
-    Server server = new Server();   //object of sender
+    System.out.println("Waiting for Connection....");
+    // Instanstiating the receiver
+    Server server = new Server();
     server.stopAndWait(); 
   }
 }
