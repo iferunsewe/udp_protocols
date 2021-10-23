@@ -31,6 +31,9 @@ class Server {
       
       // For testing purposes there is a  1 in 2 chance of responding to the message
       if( ((chance % 2) == 0) ){
+        // Sending the bytes back to the client
+        setSequenceNo();
+        updateSequenceNo();
         sendPacket();
       } else {
         System.out.println( "Oh no! The packet with sequence number '"+ sentence + "' was dropped");
@@ -38,10 +41,8 @@ class Server {
     }
   }
 
+  // Sending the packet back to the client
   private void sendPacket() throws IOException {
-    // Sending the bytes back to the client
-    getSequenceNo();
-    updateSequenceNo();
     String ack = "ack. Sequence no:" + sequenceNo;
     sendData = ack.getBytes();
     System.out.println("Sending packet back to the client: " + ack);
@@ -49,6 +50,7 @@ class Server {
     serverSocket.send(sendPacket);
   }
 
+  // Receiving from the client
   private void receivePacket() throws IOException {
     receivePacket = new DatagramPacket(receiveData, receiveData.length);
     serverSocket.receive(receivePacket);
@@ -56,18 +58,21 @@ class Server {
     System.out.println("Receiving packet with data: " + sentence);
   }
 
+  // Setting the IP and port
   private void setIPAndPort() {
-    // Setting the IP and port
     IPAddress = receivePacket.getAddress();
     port = receivePacket.getPort();
     System.out.println("Set port: " + port + " and IP address: " + IPAddress);
   }
 
-  private void getSequenceNo() {
+  // Retreving the sequence number from the data that has been sent to the server
+  private void setSequenceNo() {
     String snFromSentence = sentence.split("Sequence no:")[1].trim();
     sequenceNo = Integer.parseInt(snFromSentence);
   }
 
+  // Update the sequence number to either 0 or 1 depending on what has been
+  // received from the client
   private void updateSequenceNo() {
     sequenceNo = (sequenceNo==0) ? 1 : 0;
     System.out.println("Set sequence no: " + sequenceNo);

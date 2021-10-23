@@ -16,6 +16,7 @@ class Client {
   private static byte[] sendData = new byte[BUFFER];
   private static byte[] receiveData = new byte[BUFFER];
   private static DatagramSocket clientSocket;
+  private static DatagramPacket receivePacket;
   private static int sequenceNo = 0;
   private static int expectedSequenceNo = 1;
 
@@ -36,7 +37,11 @@ class Client {
         try{
           sendPacket();
           receivePacket();
-          // Received an ack so the loop can stop
+          setSequenceNo();
+          
+          // If the server has changed the sequence number to the expected sequence number then
+          // the loop can stop and we update the expected sequence number so the next packet can
+          // be sent
           if(sequenceNo == expectedSequenceNo) {
             System.out.println("Received ack with sequence number: " + sequenceNo);
             updateExpectedSequenceNo();
@@ -52,22 +57,31 @@ class Client {
     clientSocket.close();
   }
 
+  // Receiving from the packet to the server
   private void receivePacket() throws IOException {
-    // Receiving from the packet to the server
     System.out.println("Receiving packet from server");
-    DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+    receivePacket = new DatagramPacket(receiveData, receiveData.length);
     clientSocket.receive(receivePacket);
-    // Unpacking the data and printing it
-    String ack = new String(receivePacket.getData());
-    getSequenceNo(ack);
   }
 
+  // Sending the packet to the server
   private void sendPacket() throws IOException {
-    // Sending the packet to the server
     System.out.println("Sending packet to server with data: " + new String(sendData));
     DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
     clientSocket.send(sendPacket);
   };
+
+   // Retreving the sequence number from the data that has been sent to the client
+  private void setSequenceNo() {
+    String data = new String(receivePacket.getData());
+    String snFromData = data.split("Sequence no:")[1].trim();
+    sequenceNo = Integer.parseInt(snFromData);
+  }
+
+  // Updating the expected sequence number to either 0 or 1
+  private int updateExpectedSequenceNo() {
+    return expectedSequenceNo = (expectedSequenceNo==0) ? 1 : 0;
+  }
 
   private void getUserInput() throws IOException { 
     System.out.println("Please enter the hostname");
@@ -81,6 +95,7 @@ class Client {
     System.out.println("The port set is: " + port); // Server is set to 9876
   }
 
+  // Building the data to send to the server which is a combination of the file contents and the sequence number
   private void buildPayload(int sequenceNo) throws Exception {
     String sentence = new String(Files.readAllBytes(Paths.get(FILEPATH))) + ". Sequence no:";
     sendData = joinByteArray(sentence.getBytes(), intToByteArray(sequenceNo));
@@ -96,15 +111,6 @@ class Client {
       .put(byte1)
       .put(byte2)
       .array();
-  }
-
-  private void getSequenceNo(String sentence) {
-    String snFromSentence = sentence.split("Sequence no:")[1].trim();
-    sequenceNo = Integer.parseInt(snFromSentence);
-  }
-
-  private int updateExpectedSequenceNo() {
-    return expectedSequenceNo = (expectedSequenceNo==0) ? 1 : 0;
   }
 
   public static void main(String args[]) throws Exception {
