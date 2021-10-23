@@ -97,7 +97,7 @@ class Client {
 
   // Building the data to send to the server which is a combination of the file contents and the sequence number
   private void buildPayload(int sequenceNo) throws Exception {
-    String sentence = new String(Files.readAllBytes(Paths.get(FILEPATH))) + ". Sequence no:";
+    String sentence = new String(Files.readAllBytes(Paths.get(FILEPATH))) + ". Sequence no: ";
     sendData = joinByteArray(sentence.getBytes(), intToByteArray(sequenceNo));
   }
 
