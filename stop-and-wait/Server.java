@@ -29,8 +29,8 @@ class Server {
       Random random = new Random();
       int chance = random.nextInt( 100 );
       
-      // For testing purposes there is a  1 in 2 chance of responding to the message
-      if( ((chance % 2) == 0) ){
+      // For testing purposes there is a 1 in 5 chance of not responding to the message
+      if( !((chance % 5) == 0) ){
         // Sending the bytes back to the client
         setSequenceNo();
         updateSequenceNo();
@@ -62,7 +62,6 @@ class Server {
   private void setIPAndPort() {
     IPAddress = receivePacket.getAddress();
     port = receivePacket.getPort();
-    System.out.println("Set port: " + port + " and IP address: " + IPAddress);
   }
 
   // Retreving the sequence number from the data that has been sent to the server
