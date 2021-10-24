@@ -1,6 +1,6 @@
 // CMN Summative Assessment 2021
 // --------Client-----------
-// Communication using Stop-and-Wait protocol
+// Communication using Go-Back-N protocol
 // @version 10/10/2021
 
 import java.io.*;
@@ -9,60 +9,67 @@ import java.nio.file.*;
 import java.nio.ByteBuffer;
 
 class Client {
-  private static final int BUFFER = 1024;
-  private static final String FILEPATH = "../umbrella.txt";
-  private static InetAddress IPAddress;
-  private static int port;
-  private static byte[] sendData = new byte[BUFFER];
-  private static byte[] receiveData = new byte[BUFFER];
-  private static DatagramSocket clientSocket;
-  private static DatagramPacket receivePacket;
-  private static int sequenceNo = 0;
-  private static int expectedSequenceNo = 1;
+  private final int BUFFER = 1024;
+  private final String FILEPATH = "../umbrella.txt";
+  private final int WINDOW_SIZE = 5;
+  private InetAddress IPAddress;
+  private int port;
+  private byte[] sendData = new byte[BUFFER];
+  private byte[] receiveData = new byte[BUFFER];
+  private DatagramSocket clientSocket;
+  private DatagramPacket receivePacket;
+  private int sequenceNo;
+  private int nextSequenceNo = 0;
 
-  public void stopAndWait() throws Exception {
+  public void goBackN() throws Exception {
     // Creating a socket
     clientSocket = new DatagramSocket();
     clientSocket.setSoTimeout( 1000 );
     
     getUserInput();
+    int dynamicWindowSize = WINDOW_SIZE;
 
     // Used 10 frames to demo
-    for (int frame = 0; frame < 10; frame++) {
-      System.out.println("Frame " + frame);
-			boolean timeOut = true;
-
-			while(timeOut){
-        buildPayload(sequenceNo);
-
+    int frame = 0;
+    while(frame != 11) {
+      for (sequenceNo = nextSequenceNo; sequenceNo < dynamicWindowSize; sequenceNo++) {
+        buildPayload();
         try{
           sendPacket();
-          receivePacket();
-          setSequenceNo();
-          
-          // If the server has changed the sequence number to the expected sequence number then
-          // the loop can stop and we update the expected sequence number so the next packet can
-          // be sent
-          if(sequenceNo == expectedSequenceNo) {
-            System.out.println("Received ack with sequence number: " + sequenceNo);
-            updateExpectedSequenceNo();
-            timeOut = false;
-          }
         } catch( SocketTimeoutException exception ){
-          // Reducing the sequence number to what it was as there was an error
           System.out.println("There was a socket timeout.");
         }
       }
+      if(receivePacket()){
+        setSequenceNo();
+        System.out.println("Received ack with sequence number: " + sequenceNo);
+        nextSequenceNo = dynamicWindowSize;
+        dynamicWindowSize++;
+        frame++;
+      } else {
+        // Resetting the next sequence number if we don't receive an ack from the server
+        // This should help resending all the packets in the current frame
+        nextSequenceNo = frame;
+      };
+      
     }
+    
     System.out.println("All the data has been sent. The program is exiting. Bye bye...");
     clientSocket.close();
   }
 
   // Receiving from the packet to the server
-  private void receivePacket() throws IOException {
-    System.out.println("Receiving packet from server");
-    receivePacket = new DatagramPacket(receiveData, receiveData.length);
-    clientSocket.receive(receivePacket);
+  private boolean receivePacket() throws IOException {
+    try{
+      System.out.println("Receiving packet from server");
+      receivePacket = new DatagramPacket(receiveData, receiveData.length);
+      clientSocket.receive(receivePacket);
+      return true;
+    } catch( SocketTimeoutException exception ){
+      // Reducing the sequence number to what it was as there was an error
+      System.out.println("There was a socket timeout.");
+      return false;
+    }
   }
 
   // Sending the packet to the server
@@ -79,25 +86,21 @@ class Client {
     sequenceNo = Integer.parseInt(snFromData);
   }
 
-  // Updating the expected sequence number to either 0 or 1
-  private int updateExpectedSequenceNo() {
-    return expectedSequenceNo = (expectedSequenceNo==0) ? 1 : 0;
-  }
-
   private void getUserInput() throws IOException { 
     System.out.println("Please enter the hostname");
-    BufferedReader hostnameFromUser = new BufferedReader(new InputStreamReader(System.in));
-    IPAddress = InetAddress.getByName(hostnameFromUser.readLine());
+    // BufferedReader hostnameFromUser = new BufferedReader(new InputStreamReader(System.in));
+    // IPAddress = InetAddress.getByName(hostnameFromUser.readLine());
+    IPAddress = InetAddress.getByName("localhost");
     System.out.println("The IP address set is: " + IPAddress);
-
     System.out.println("Please enter your port");
-    BufferedReader portFromUser = new BufferedReader(new InputStreamReader(System.in));
-    port = Integer.parseInt(portFromUser.readLine());    
+    // BufferedReader portFromUser = new BufferedReader(new InputStreamReader(System.in));
+    // port = Integer.parseInt(portFromUser.readLine());
+    port = Integer.parseInt("9876");  
     System.out.println("The port set is: " + port); // Server is set to 9876
   }
 
   // Building the data to send to the server which is a combination of the file contents and the sequence number
-  private void buildPayload(int sequenceNo) throws Exception {
+  private void buildPayload() throws Exception {
     String sentence = new String(Files.readAllBytes(Paths.get(FILEPATH))) + ". Sequence no: ";
     sendData = joinByteArray(sentence.getBytes(), intToByteArray(sequenceNo));
   }
@@ -117,6 +120,6 @@ class Client {
   public static void main(String args[]) throws Exception {
     // Instanstiating the sender
     Client client = new Client();
-    client.stopAndWait(); 
+    client.goBackN(); 
   }
 }
