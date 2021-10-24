@@ -88,14 +88,12 @@ class Client {
 
   private void getUserInput() throws IOException { 
     System.out.println("Please enter the hostname");
-    // BufferedReader hostnameFromUser = new BufferedReader(new InputStreamReader(System.in));
-    // IPAddress = InetAddress.getByName(hostnameFromUser.readLine());
-    IPAddress = InetAddress.getByName("localhost");
+    BufferedReader hostnameFromUser = new BufferedReader(new InputStreamReader(System.in));
+    IPAddress = InetAddress.getByName(hostnameFromUser.readLine());
     System.out.println("The IP address set is: " + IPAddress);
     System.out.println("Please enter your port");
-    // BufferedReader portFromUser = new BufferedReader(new InputStreamReader(System.in));
-    // port = Integer.parseInt(portFromUser.readLine());
-    port = Integer.parseInt("9876");  
+    BufferedReader portFromUser = new BufferedReader(new InputStreamReader(System.in));
+    port = Integer.parseInt(portFromUser.readLine());
     System.out.println("The port set is: " + port); // Server is set to 9876
   }
 
