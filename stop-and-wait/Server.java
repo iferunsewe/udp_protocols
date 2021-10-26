@@ -36,7 +36,7 @@ class Server {
         updateSequenceNo();
         sendPacket();
       } else {
-        System.out.println( "Oh no! The packet with sequence number '"+ sentence + "' was dropped");
+        System.out.println("Oh no! The packet with the data '"+ sentence + "' was dropped");
       }
     }
   }
